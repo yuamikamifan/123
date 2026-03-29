@@ -1,16 +1,152 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>File Gallery</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #800080, #e6e6fa);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #upload-area {
+            border: 2px dashed #fff;
+            padding: 20px;
+            text-align: center;
+            width: 80%;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        #file-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 80%;
+        }
+        .file-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: calc(30% - 10px);
+        }
+        .file-info {
+            display: flex;
+            align-items: center;
+        }
+        .file-info img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+        .delete-btn {
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1>Uploaded Files Gallery</h1>
-    <div class="gallery">
-        <ul>
-            <li><a href="path/to/image1.jpg">Image 1</a></li>
-            <li><a href="path/to/image2.jpg">Image 2</a></li>
-            <li><a href="path/to/file3.pdf">File 3</a></li>
-            <!-- Add more files as necessary -->
-        </ul>
-    </div>
+    <div id="upload-area">Drag and drop files here<br>or click to upload</div>
+    <div id="file-gallery"></div>
+    <script>
+        const uploadArea = document.getElementById('upload-area');
+        const fileGallery = document.getElementById('file-gallery');
+
+        // Load existing files from localStorage
+        const loadFiles = () => {
+            const files = JSON.parse(localStorage.getItem('files')) || [];
+            files.forEach(file => addFileToGallery(file));
+        };
+
+        // Add a file to the gallery
+        const addFileToGallery = (file) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-item');
+            fileItem.innerHTML = `<div class='file-info'><img src='${file.isImage ? file.url : 'file-icon.png'}' alt='${file.name}' />${file.name} (${file.size} bytes)</div><button class='delete-btn'>Delete</button>`;
+            fileItem.querySelector('.delete-btn').onclick = () => deleteFile(file.name);
+            fileGallery.appendChild(fileItem);
+        };
+
+        // Handle file drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('active');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('active');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            for (const file of files) {
+                handleFile(file);
+            }
+        });
+
+        // Handle file selection
+        uploadArea.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.onchange = (e) => {
+                const files = e.target.files;
+                for (const file of files) {
+                    handleFile(file);
+                }
+            };
+            input.click();
+        });
+
+        // Process each file
+        const handleFile = (file) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const fileData = {
+                    name: file.name,
+                    size: file.size,
+                    isImage: file.type.startsWith('image/'),
+                    url: event.target.result
+                };
+                addFileToGallery(fileData);
+                saveFileToStorage(fileData);
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // Save file to localStorage
+        const saveFileToStorage = (file) => {
+            const files = JSON.parse(localStorage.getItem('files')) || [];
+            files.push(file);
+            localStorage.setItem('files', JSON.stringify(files));
+        };
+
+        // Delete file
+        const deleteFile = (fileName) => {
+            const files = JSON.parse(localStorage.getItem('files')) || [];
+            const updatedFiles = files.filter(file => file.name !== fileName);
+            localStorage.setItem('files', JSON.stringify(updatedFiles));
+            fileGallery.innerHTML = '';
+            loadFiles();
+        };
+
+        loadFiles();
+    </script>
 </body>
 </html>
