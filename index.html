@@ -3,149 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Upload</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to bottom, #800080, #e6e6fa);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-        #upload-area {
-            border: 2px dashed #fff;
-            padding: 20px;
-            text-align: center;
-            width: 80%;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-        #file-gallery {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            width: 80%;
-        }
-        .file-item {
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: calc(30% - 10px);
-        }
-        .file-info {
-            display: flex;
-            align-items: center;
-        }
-        .file-info img {
-            width: 40px;
-            height: 40px;
-            margin-right: 10px;
-        }
-        .delete-btn {
-            background: red;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-    </style>
+    <title>Cute Archive</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="upload-area">Drag and drop files here<br>or click to upload</div>
-    <div id="file-gallery"></div>
+    <header>
+        <h1 class="brand">Cute Archive</h1>
+        <nav>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Gallery</a></li>
+                <li><a href="#">Upload</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section class="upload-section">
+            <h2>Upload Your Files</h2>
+            <div class="upload-area" id="upload-area">
+                <p>Drag and drop your files here or click to select files.</p>
+            </div>
+            <input type="file" id="file-input" multiple style="display:none;">
+        </section>
+        <section class="gallery">
+            <h2>File Gallery</h2>
+            <div class="gallery-grid" id="gallery-grid">
+                <!-- Dynamically added file cards will appear here -->
+            </div>
+        </section>
+    </main>
     <script>
         const uploadArea = document.getElementById('upload-area');
-        const fileGallery = document.getElementById('file-gallery');
+        const fileInput = document.getElementById('file-input');
+        const galleryGrid = document.getElementById('gallery-grid');
 
-        // Load existing files from localStorage
+        // Load files from localStorage
         const loadFiles = () => {
             const files = JSON.parse(localStorage.getItem('files')) || [];
             files.forEach(file => addFileToGallery(file));
         };
 
-        // Add a file to the gallery
-        const addFileToGallery = (file) => {
-            const fileItem = document.createElement('div');
-            fileItem.classList.add('file-item');
-            fileItem.innerHTML = `<div class='file-info'><img src='${file.isImage ? file.url : 'file-icon.png'}' alt='${file.name}' />${file.name} (${file.size} bytes)</div><button class='delete-btn'>Delete</button>`;
-            fileItem.querySelector('.delete-btn').onclick = () => deleteFile(file.name);
-            fileGallery.appendChild(fileItem);
+        // Add selected or dropped files to the gallery
+        const addFileToGallery = file => {
+            const card = document.createElement('div');
+            card.classList.add('file-card');
+            card.innerHTML = `<p>${file.name}</p><button onclick="deleteFile('${file.name}')">Delete</button>`;
+            galleryGrid.appendChild(card);
         };
 
-        // Handle file drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('active');
+        // Handle drag and drop
+        uploadArea.addEventListener('dragover', event => {
+            event.preventDefault();
+            uploadArea.classList.add('highlight');
         });
 
         uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('active');
+            uploadArea.classList.remove('highlight');
         });
 
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const files = e.dataTransfer.files;
-            for (const file of files) {
-                handleFile(file);
-            }
+        uploadArea.addEventListener('drop', event => {
+            event.preventDefault();
+            uploadArea.classList.remove('highlight');
+            const files = event.dataTransfer.files;
+            handleFiles(files);
         });
 
         // Handle file selection
-        uploadArea.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.multiple = true;
-            input.onchange = (e) => {
-                const files = e.target.files;
-                for (const file of files) {
-                    handleFile(file);
-                }
-            };
-            input.click();
-        });
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', event => handleFiles(event.target.files));
 
-        // Process each file
-        const handleFile = (file) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const fileData = {
-                    name: file.name,
-                    size: file.size,
-                    isImage: file.type.startsWith('image/'),
-                    url: event.target.result
-                };
-                addFileToGallery(fileData);
-                saveFileToStorage(fileData);
-            };
-            reader.readAsDataURL(file);
+        // Handle files and add to gallery
+        const handleFiles = files => {
+            const fileArray = Array.from(files);
+            fileArray.forEach(file => {
+                addFileToGallery(file);
+                saveFileToLocalStorage(file);
+            });
         };
 
-        // Save file to localStorage
-        const saveFileToStorage = (file) => {
+        // Save files to localStorage
+        const saveFileToLocalStorage = file => {
             const files = JSON.parse(localStorage.getItem('files')) || [];
             files.push(file);
             localStorage.setItem('files', JSON.stringify(files));
         };
 
-        // Delete file
-        const deleteFile = (fileName) => {
+        // Delete file from gallery and localStorage
+        const deleteFile = fileName => {
             const files = JSON.parse(localStorage.getItem('files')) || [];
             const updatedFiles = files.filter(file => file.name !== fileName);
             localStorage.setItem('files', JSON.stringify(updatedFiles));
-            fileGallery.innerHTML = '';
-            loadFiles();
+            loadFiles(); // Refresh gallery
         };
 
+        // Initial load of files
         loadFiles();
     </script>
 </body>
