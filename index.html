@@ -3,20 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Archive Website</title>
+    <title>File Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 600px; margin: auto; padding: 20px; }
+        input[type='file'] { width: 100%; }
+        .upload-btn { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; }
+        .upload-btn:hover { background-color: #45a049; }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to the Archive</h1>
-    </header>
-    <main>
-        <section>
-            <h2>Archives</h2>
-            <p>Welcome to the archive. Here you can find a collection of resources.</p>
-        </section>
-    </main>
-    <footer>
-        <p>Current Date and Time: 2026-03-29 14:13:11 UTC</p>
-    </footer>
+    <div class="container">
+        <h1>Upload a File</h1>
+        <input type="file" id="fileInput" />
+        <button class="upload-btn" onclick="uploadFile()">Upload</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const messageDiv = document.getElementById('message');
+            if (fileInput.files.length === 0) {
+                messageDiv.textContent = 'Please select a file to upload.';
+                return;
+            }
+            const file = fileInput.files[0];
+            localStorage.setItem('uploadedFileName', file.name);
+            messageDiv.textContent = 'File uploaded: ' + file.name;
+        }
+    </script>
 </body>
 </html>
